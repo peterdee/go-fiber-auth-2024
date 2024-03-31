@@ -8,6 +8,8 @@ import (
 	"github.com/gofiber/fiber/v3"
 	"github.com/joho/godotenv"
 
+	apiAuth "go-fiber-auth-2024/apis/auth"
+	apiIndex "go-fiber-auth-2024/apis/index"
 	"go-fiber-auth-2024/constants"
 	"go-fiber-auth-2024/middlewares"
 	"go-fiber-auth-2024/utilities"
@@ -34,14 +36,13 @@ func main() {
 		port = envPort
 	}
 
-	app.Get("/", func(c fiber.Ctx) error {
-		return c.SendString("Hello, World 👋!")
-	})
+	apiAuth.Initialize(app)
+	apiIndex.Initialize(app)
 
 	launchError := app.Listen(
 		fmt.Sprintf(":%s", port),
 		fiber.ListenConfig{
-			EnablePrefork:     true,
+			EnablePrefork:     false,
 			OnShutdownError:   utilities.ShutdownError,
 			OnShutdownSuccess: utilities.ShutdownSuccess,
 		},
