@@ -1,13 +1,20 @@
 package constants
 
 type ActionMessages struct {
-	LoadedEnvFile   string
-	ShutdownError   string
-	ShutdownSuccess string
+	LoadedEnvFile      string
+	PGConnected        string
+	PGCredentialsError string
+	ShutdownError      string
+	ShutdownSuccess    string
 }
 type EnvNames struct {
-	EnvSource string
-	Port      string
+	EnvSource  string
+	Port       string
+	PGDatabase string
+	PGHost     string
+	PGPassword string
+	PGPort     string
+	PGUsername string
 }
 
 type EnvSources struct {

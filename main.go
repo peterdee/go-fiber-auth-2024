@@ -10,8 +10,10 @@ import (
 
 	apiAuth "go-fiber-auth-2024/apis/auth"
 	apiIndex "go-fiber-auth-2024/apis/index"
+	apiUser "go-fiber-auth-2024/apis/user"
 	"go-fiber-auth-2024/constants"
 	"go-fiber-auth-2024/middlewares"
+	"go-fiber-auth-2024/postgresql"
 	"go-fiber-auth-2024/utilities"
 )
 
@@ -31,6 +33,8 @@ func main() {
 
 	app.Use(middlewares.RequestReceivedTimestamp)
 
+	postgresql.CreateDatabaseConnection()
+
 	port := constants.PORT
 	if envPort := os.Getenv(constants.ENV_NAMES.Port); envPort != "" {
 		port = envPort
@@ -38,6 +42,7 @@ func main() {
 
 	apiAuth.Initialize(app)
 	apiIndex.Initialize(app)
+	apiUser.Initialize(app)
 
 	launchError := app.Listen(
 		fmt.Sprintf(":%s", port),
