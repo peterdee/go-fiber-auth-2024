@@ -12,7 +12,7 @@ func ErrorHandler(context fiber.Ctx, err error) error {
 	info := constants.RESPONSE_INFO.InternalServerError
 	status := fiber.StatusInternalServerError
 
-	var customError *CustomError
+	var customError *ApplicationError
 	if errors.As(err, &customError) {
 		if customError.Info != "" {
 			info = customError.Info

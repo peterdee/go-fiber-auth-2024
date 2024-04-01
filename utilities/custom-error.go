@@ -8,14 +8,14 @@ import (
 	"go-fiber-auth-2024/constants"
 )
 
-type CustomError struct {
+type ApplicationError struct {
 	Err       error
 	Info      string
 	Printable bool
 	Status    int
 }
 
-func (err *CustomError) Error() string {
+func (err *ApplicationError) Error() string {
 	return err.Err.Error()
 }
 
@@ -25,8 +25,8 @@ type ApplicationErrorOptions struct {
 	Status int
 }
 
-func NewApplicationError(options ApplicationErrorOptions) *CustomError {
-	newCustomError := new(CustomError)
+func NewApplicationError(options ApplicationErrorOptions) *ApplicationError {
+	newCustomError := new(ApplicationError)
 	newCustomError.Err = errors.New(constants.RESPONSE_INFO.InternalServerError)
 	newCustomError.Info = constants.RESPONSE_INFO.InternalServerError
 	newCustomError.Printable = false
