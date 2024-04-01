@@ -7,5 +7,6 @@ import (
 )
 
 func signUpController(context fiber.Ctx) error {
+
 	return utilities.Response(utilities.ResponseOptions{Context: context})
 }

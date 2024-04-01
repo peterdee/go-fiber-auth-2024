@@ -6,6 +6,8 @@ import (
 	"os"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/favicon"
+	"github.com/gofiber/fiber/v3/middleware/logger"
 	"github.com/joho/godotenv"
 
 	apiAuth "go-fiber-auth-2024/apis/auth"
@@ -32,6 +34,11 @@ func main() {
 	})
 
 	app.Use(middlewares.RequestReceivedTimestamp)
+	app.Use(favicon.New(favicon.Config{
+		File: "./assets/favicon.ico",
+		URL:  "/favicon.ico",
+	}))
+	app.Use(logger.New())
 
 	postgresql.CreateDatabaseConnection()
 

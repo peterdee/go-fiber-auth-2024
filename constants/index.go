@@ -34,5 +34,6 @@ const PORT string = "2024"
 
 var RESPONSE_INFO = ResponseInfo{
 	InternalServerError: "INTERNAL_SERVER_ERROR",
+	MissingData:         "MISSING_DATA",
 	Ok:                  "OK",
 }

@@ -29,5 +29,6 @@ type LocalsKeys struct {
 
 type ResponseInfo struct {
 	InternalServerError string
+	MissingData         string
 	Ok                  string
 }

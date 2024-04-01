@@ -50,6 +50,15 @@ func CreateDatabaseConnection() {
 		log.Fatal(pingError)
 	}
 
+	autoMigrationError := db.AutoMigrate(
+		&User{},
+		&UserSecret{},
+		&UsedRefreshToken{},
+	)
+	if autoMigrationError != nil {
+		log.Fatal(autoMigrationError)
+	}
+
 	Database = db
 
 	log.Println(constants.ACTION_MESSAGES.PGConnected)
