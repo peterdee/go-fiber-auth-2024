@@ -8,13 +8,17 @@ type ActionMessages struct {
 	ShutdownSuccess    string
 }
 type EnvNames struct {
-	EnvSource  string
-	Port       string
-	PGDatabase string
-	PGHost     string
-	PGPassword string
-	PGPort     string
-	PGUsername string
+	AccessTokenCommonSecret       string
+	AccessTokenExpirationSeconds  string
+	EnvSource                     string
+	PGDatabase                    string
+	PGHost                        string
+	PGPassword                    string
+	PGPort                        string
+	PGUsername                    string
+	Port                          string
+	RefreshTokenCommonSecret      string
+	RefreshTokenExpirationSeconds string
 }
 
 type EnvSources struct {
@@ -28,7 +32,9 @@ type LocalsKeys struct {
 }
 
 type ResponseInfo struct {
+	EmailAlreadyInUse   string
 	InternalServerError string
 	MissingData         string
 	Ok                  string
+	Unauthorized        string
 }

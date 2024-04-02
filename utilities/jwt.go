@@ -18,8 +18,13 @@ type TokenClaims struct {
 	Subject uint            `json:"sub"`
 }
 
-func CreateSecret(userSecretHash, passwordHash string) (string, error) {
-	hashed, hashError := CreateHash(fmt.Sprintf("%s:%s", userSecretHash, passwordHash))
+func CreateTokenSecret(userSecretHash, passwordHash, commonSecret string) (string, error) {
+	hashed, hashError := CreateHash(fmt.Sprintf(
+		"%s:%s:%s",
+		userSecretHash,
+		passwordHash,
+		commonSecret,
+	))
 	if hashError != nil {
 		return "", hashError
 	}

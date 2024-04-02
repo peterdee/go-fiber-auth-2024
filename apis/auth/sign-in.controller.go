@@ -1,11 +1,9 @@
 package auth
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/gofiber/fiber/v3"
-	"gorm.io/gorm"
 
 	"go-fiber-auth-2024/constants"
 	"go-fiber-auth-2024/postgresql"
@@ -33,35 +31,74 @@ func signInController(context fiber.Ctx) error {
 	}
 
 	email := strings.Trim(strings.ToLower(payload.Email), " ")
-	password := strings.Trim(payload.Password, " ")
 
-	// TODO: use controlled transaction
-	var user postgresql.User
-
-	tx := postgresql.Database.Begin()
-	t
-	transactionError := postgresql.Database.Transaction(
-		func(tx *gorm.DB) error {
-			queryError := tx.
-				Where(&postgresql.User{Email: email}).
-				First(&user).
-				Error
-			if queryError != nil {
-				return queryError
-			}
-			if user.ID != 0 {
-
-			}
-			return nil
-		},
-	)
-
-	if transactionError != nil {
+	var userRecord postgresql.User
+	queryError := postgresql.
+		Database.
+		Where(&postgresql.User{Email: email}).
+		First(&userRecord).
+		Error
+	if queryError != nil {
+		if queryError.Error() == "record not found" {
+			return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+				Info:   constants.RESPONSE_INFO.Unauthorized,
+				Status: fiber.StatusUnauthorized,
+			})
+		}
 		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
-			Err: transactionError,
+			Err: queryError,
 		})
 	}
-	fmt.Println("user", user)
+
+	var passwordRecord postgresql.Password
+	queryError = postgresql.
+		Database.
+		Where(&postgresql.Password{UserID: userRecord.ID}).
+		First(&passwordRecord).
+		Error
+	if queryError != nil {
+		if queryError.Error() == "record not found" {
+			return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+				Info:   constants.RESPONSE_INFO.Unauthorized,
+				Status: fiber.StatusUnauthorized,
+			})
+		}
+		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+			Err: queryError,
+		})
+	}
+
+	password := strings.Trim(payload.Password, " ")
+	isValid, matchError := utilities.ComparePasswordAndHash(password, passwordRecord.Hash)
+	if matchError != nil {
+		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+			Err: matchError,
+		})
+	}
+	if !isValid {
+		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+			Info:   constants.RESPONSE_INFO.Unauthorized,
+			Status: fiber.StatusUnauthorized,
+		})
+	}
+
+	var userSecretRecord postgresql.Password
+	queryError = postgresql.
+		Database.
+		Where(&postgresql.UserSecret{UserID: userRecord.ID}).
+		First(&userSecretRecord).
+		Error
+	if queryError != nil {
+		if queryError.Error() == "record not found" {
+			return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+				Info:   constants.RESPONSE_INFO.Unauthorized,
+				Status: fiber.StatusUnauthorized,
+			})
+		}
+		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+			Err: queryError,
+		})
+	}
 
 	return utilities.Response(utilities.ResponseOptions{Context: context})
 }

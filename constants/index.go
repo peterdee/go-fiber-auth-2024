@@ -11,13 +11,17 @@ var ACTION_MESSAGES = ActionMessages{
 const APP_NAME string = "GO FIBER AUTH 2024"
 
 var ENV_NAMES = EnvNames{
-	EnvSource:  "ENV_SOURCE",
-	Port:       "PORT",
-	PGDatabase: "PG_DATABASE",
-	PGHost:     "PG_HOST",
-	PGPassword: "PG_PASSWORD",
-	PGPort:     "PG_PORT",
-	PGUsername: "PG_USERNAME",
+	AccessTokenCommonSecret:       "ACCESS_TOKEN_COMMON_SECRET",
+	AccessTokenExpirationSeconds:  "ACCESS_TOKEN_EXPIRATION_SECONDS",
+	EnvSource:                     "ENV_SOURCE",
+	PGDatabase:                    "PG_DATABASE",
+	PGHost:                        "PG_HOST",
+	PGPassword:                    "PG_PASSWORD",
+	PGPort:                        "PG_PORT",
+	PGUsername:                    "PG_USERNAME",
+	Port:                          "PORT",
+	RefreshTokenCommonSecret:      "REFRESH_TOKEN_COMMON_SECRET",
+	RefreshTokenExpirationSeconds: "REFRESH_TOKEN_EXPIRATION_SECONDS",
 }
 
 var ENV_SOURCES = EnvSources{
@@ -33,7 +37,9 @@ var LOCALS_KEYS = LocalsKeys{
 const PORT string = "2024"
 
 var RESPONSE_INFO = ResponseInfo{
+	EmailAlreadyInUse:   "EMAIL_ALREADY_IN_USE",
 	InternalServerError: "INTERNAL_SERVER_ERROR",
 	MissingData:         "MISSING_DATA",
 	Ok:                  "OK",
+	Unauthorized:        "UNAUTHORIZED",
 }
