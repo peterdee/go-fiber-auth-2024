@@ -21,6 +21,7 @@ type Password struct {
 
 type UserSecret struct {
 	gorm.Model
+	Secret string
 	UserID uint
 }
 

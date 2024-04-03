@@ -31,11 +31,16 @@ func signUpController(context fiber.Ctx) error {
 		})
 	}
 
-	// TODO: use transaction
+	tx := postgresql.Database.Begin()
+	if tx.Error != nil {
+		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+			Err: tx.Error,
+		})
+	}
+
 	email := strings.Trim(strings.ToLower(payload.Email), " ")
 	var existingUserRecord postgresql.User
-	queryError := postgresql.
-		Database.
+	queryError := tx.
 		Where(&postgresql.User{Email: email}).
 		First(&existingUserRecord).
 		Error
@@ -48,6 +53,66 @@ func signUpController(context fiber.Ctx) error {
 		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
 			Info:   constants.RESPONSE_INFO.EmailAlreadyInUse,
 			Status: fiber.StatusBadRequest,
+		})
+	}
+
+	firstName := strings.Trim(payload.FirstName, " ")
+	lastName := strings.Trim(payload.LastName, " ")
+	newUser := postgresql.User{
+		Email:     email,
+		FirstName: firstName,
+		LastName:  lastName,
+	}
+	result := tx.Create(&newUser)
+	if result.Error != nil {
+		tx.Rollback()
+		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+			Err: result.Error,
+		})
+	}
+
+	password := strings.Trim(payload.Password, " ")
+	hashed, hashError := utilities.CreateHash(password)
+	if hashError != nil {
+		tx.Rollback()
+		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+			Err: hashError,
+		})
+	}
+	result = tx.Create(&postgresql.Password{
+		Hash:   hashed,
+		UserID: newUser.ID,
+	})
+	if result.Error != nil {
+		tx.Rollback()
+		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+			Err: result.Error,
+		})
+	}
+
+	secret, secretError := utilities.CreateUserSecret(newUser.ID)
+	if secretError != nil {
+		tx.Rollback()
+		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+			Err: hashError,
+		})
+	}
+	result = tx.Create(&postgresql.UserSecret{
+		Secret: secret,
+		UserID: newUser.ID,
+	})
+	if result.Error != nil {
+		tx.Rollback()
+		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+			Err: result.Error,
+		})
+	}
+
+	commitError := tx.Commit().Error
+	if commitError != nil {
+		tx.Rollback()
+		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+			Err: commitError,
 		})
 	}
 
