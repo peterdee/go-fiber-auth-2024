@@ -8,6 +8,7 @@ import (
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 var Database *gorm.DB
@@ -36,7 +37,12 @@ func CreateDatabaseConnection() {
 		port,
 	)
 
-	db, connectionError := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, connectionError := gorm.Open(
+		postgres.Open(dsn),
+		&gorm.Config{
+			Logger: logger.Default.LogMode(logger.Silent),
+		},
+	)
 	if connectionError != nil {
 		log.Fatal(connectionError)
 	}
@@ -52,6 +58,7 @@ func CreateDatabaseConnection() {
 
 	autoMigrationError := db.AutoMigrate(
 		&User{},
+		&Password{},
 		&UserSecret{},
 		&UsedRefreshToken{},
 	)
