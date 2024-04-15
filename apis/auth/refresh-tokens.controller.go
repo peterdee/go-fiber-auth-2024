@@ -122,7 +122,26 @@ func refreshTokensController(context fiber.Ctx) error {
 		})
 	}
 
-	// TODO: verify refresh token, store it in the database, create a new token pair and return it
+	// TODO: verify refresh token, store it in the database
 
-	return utilities.Response(utilities.ResponseOptions{Context: context})
+	// create a new token pair
+	newAccessToken, newRefreshToken, internalError := createTokens(
+		user.ID,
+		tx,
+		context,
+	)
+	if internalError != nil {
+		tx.Rollback()
+		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+			Err: internalError,
+		})
+	}
+
+	return utilities.Response(utilities.ResponseOptions{
+		Context: context,
+		Data: fiber.Map{
+			"accessToken":  newAccessToken,
+			"refreshToken": newRefreshToken,
+		},
+	})
 }

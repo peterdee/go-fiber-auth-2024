@@ -65,6 +65,8 @@ var RESPONSE_INFO = ResponseInfo{
 	Unauthorized:           "UNAUTHORIZED",
 }
 
+const TOKEN_PAIR_ID_LENGTH int = 24
+
 var TOKENS = Tokens{
 	DefaultAccessTokenCommonSecret:       "access-secret",
 	DefaultAccessTokenExpirationSeconds:  3600,
