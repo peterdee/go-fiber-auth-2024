@@ -54,6 +54,7 @@ type ResponseInfo struct {
 	MissingData            string
 	MissingToken           string
 	Ok                     string
+	OldPasswordIsInvalid   string
 	Unauthorized           string
 }
 

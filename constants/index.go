@@ -60,6 +60,7 @@ var RESPONSE_INFO = ResponseInfo{
 	MissingData:            "MISSING_DATA",
 	MissingToken:           "MISSING_TOKEN",
 	Ok:                     "OK",
+	OldPasswordIsInvalid:   "OLD_PASSWORD_IS_INVALID",
 	Unauthorized:           "UNAUTHORIZED",
 }
 
