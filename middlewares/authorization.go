@@ -75,24 +75,103 @@ func Authorization(context fiber.Ctx) error {
 	}
 
 	// TODO: get user secret hash & user password hash for token secret
+	userId, convertError := strconv.Atoi(userIdString)
+	if convertError != nil {
+		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+			Err: convertError,
+		})
+	}
+
 	userSecretHash, redisError := redis.Client.Get(context.Context(), redis.CreateKey(
 		constants.REDIS_PREFIXES.SecretHash,
 		userIdString,
 	)).Result()
 	if redisError != nil {
 		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
-			Err: fingerprintError,
+			Err: redisError,
 		})
 	}
 	if userSecretHash == "" {
 		var userSecretRecord postgresql.UserSecret
-		queryError := postgresql.Database.Where(...).First(&userSecretRecord).Error
+		queryError := postgresql.
+			Database.
+			Where(&postgresql.UserSecret{UserID: uint(userId)}).
+			First(&userSecretRecord).
+			Error
 		if queryError != nil {
-			// TODO: handle query error
+			if queryError.Error() == "record not found" {
+				return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+					Info:   constants.RESPONSE_INFO.Unauthorized,
+					Status: fiber.StatusUnauthorized,
+				})
+			}
+			return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+				Err: queryError,
+			})
 		}
+		setError := redis.Client.Set(
+			context.Context(),
+			redis.CreateKey(
+				constants.REDIS_PREFIXES.SecretHash,
+				userIdString,
+			),
+			userSecretRecord.Secret,
+			time.Hour*4,
+		).Err()
+		if setError != nil {
+			return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+				Err: setError,
+			})
+		}
+		userSecretHash = userSecretRecord.Secret
 	}
 
-	userPasswordHash := ""
+	userPasswordHash, redisError := redis.Client.Get(
+		context.Context(),
+		redis.CreateKey(
+			constants.REDIS_PREFIXES.PasswordHash,
+			userIdString,
+		),
+	).Result()
+	if redisError != nil {
+		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+			Err: redisError,
+		})
+	}
+	if userPasswordHash == "" {
+		var userPasswordRecord postgresql.Password
+		queryError := postgresql.
+			Database.
+			Where(&postgresql.Password{UserID: uint(userId)}).
+			First(&userPasswordRecord).
+			Error
+		if queryError != nil {
+			if queryError.Error() == "record not found" {
+				return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+					Info:   constants.RESPONSE_INFO.Unauthorized,
+					Status: fiber.StatusUnauthorized,
+				})
+			}
+			return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+				Err: queryError,
+			})
+		}
+		setError := redis.Client.Set(
+			context.Context(),
+			redis.CreateKey(
+				constants.REDIS_PREFIXES.SecretHash,
+				userIdString,
+			),
+			userPasswordRecord.Hash,
+			time.Hour*4,
+		).Err()
+		if setError != nil {
+			return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+				Err: setError,
+			})
+		}
+		userPasswordHash = userPasswordRecord.Hash
+	}
 
 	tokenSecret, tokenSecretError := utilities.CreateTokenSecret(
 		userSecretHash,
@@ -114,13 +193,6 @@ func Authorization(context fiber.Ctx) error {
 		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
 			Info:   constants.RESPONSE_INFO.InvlaidToken,
 			Status: fiber.StatusUnauthorized,
-		})
-	}
-
-	userId, convertError := strconv.Atoi(userIdString)
-	if convertError != nil {
-		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
-			Err: convertError,
 		})
 	}
 
