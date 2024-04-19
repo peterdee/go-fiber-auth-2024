@@ -102,6 +102,16 @@ func signInController(context fiber.Ctx) error {
 		})
 	}
 
+	// TODO: create a fingerprint for a user
+	fmt.Println(
+		context.Get("user-agent"),
+		context.Get("accept-language"),
+		context.Context().RemoteAddr(),
+		context.IP(),
+		context.IPs(),
+		context.GetReqHeaders(),
+	)
+
 	tokenPairId := gohelpers.RandomString(24)
 
 	accessTokenSecret, secretError := utilities.CreateTokenSecret(
