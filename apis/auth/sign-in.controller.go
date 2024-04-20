@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/julyskies/gohelpers"
 
 	"go-fiber-auth-2024/constants"
 	"go-fiber-auth-2024/postgresql"
@@ -101,6 +102,8 @@ func signInController(context fiber.Ctx) error {
 		})
 	}
 
+	tokenPairId := gohelpers.RandomString(24)
+
 	accessTokenSecret, secretError := utilities.CreateTokenSecret(
 		userSecretRecord.Hash,
 		passwordRecord.Hash,
@@ -117,6 +120,7 @@ func signInController(context fiber.Ctx) error {
 	accessToken, tokenError := utilities.CreateToken(
 		fmt.Sprint(userRecord.ID),
 		accessTokenSecret,
+		tokenPairId,
 	)
 	if tokenError != nil {
 		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
@@ -140,6 +144,7 @@ func signInController(context fiber.Ctx) error {
 	refreshToken, tokenError := utilities.CreateToken(
 		fmt.Sprint(userRecord.ID),
 		refreshTokenSecret,
+		tokenPairId,
 	)
 	if tokenError != nil {
 		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{

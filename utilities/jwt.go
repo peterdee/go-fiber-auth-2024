@@ -31,9 +31,10 @@ func CreateTokenSecret(userSecretHash, passwordHash, commonSecret string) (strin
 	return hashed, nil
 }
 
-func CreateToken(userId string, tokenSecret string) (string, error) {
+func CreateToken(userId string, tokenSecret string, pairId string) (string, error) {
 	var claims jwt.Claims
 
+	claims.ID = pairId
 	claims.Issued = jwt.NewNumericTime(time.Now().Round(time.Second))
 	claims.Subject = userId
 
