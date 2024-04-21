@@ -1,12 +1,13 @@
 package constants
 
 type ActionMessages struct {
-	LoadedEnvFile      string
-	PGConnected        string
-	PGCredentialsError string
-	ShutdownError      string
-	ShutdownSuccess    string
+	EnvLoadingError string
+	LoadedEnvFile   string
+	PGConnected     string
+	ShutdownError   string
+	ShutdownSuccess string
 }
+
 type EnvNames struct {
 	AccessTokenCommonSecret       string
 	AccessTokenExpirationSeconds  string
@@ -37,4 +38,11 @@ type ResponseInfo struct {
 	MissingData         string
 	Ok                  string
 	Unauthorized        string
+}
+
+type Tokens struct {
+	DefaultAccessTokenCommonSecret       string
+	DefaultAccessTokenExpirationSeconds  int
+	DefaultRefreshTokenCommonSecret      string
+	DefaultRefreshTokenExpirationSeconds int
 }

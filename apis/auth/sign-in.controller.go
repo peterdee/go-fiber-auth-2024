@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/gofiber/fiber/v3"
@@ -100,5 +101,57 @@ func signInController(context fiber.Ctx) error {
 		})
 	}
 
-	return utilities.Response(utilities.ResponseOptions{Context: context})
+	accessTokenSecret, secretError := utilities.CreateTokenSecret(
+		userSecretRecord.Hash,
+		passwordRecord.Hash,
+		utilities.GetEnv(utilities.GetEnvOptions{
+			DefaultValue: constants.TOKENS.DefaultAccessTokenCommonSecret,
+			EnvName:      constants.ENV_NAMES.AccessTokenCommonSecret,
+		}),
+	)
+	if secretError != nil {
+		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+			Err: secretError,
+		})
+	}
+	accessToken, tokenError := utilities.CreateToken(
+		fmt.Sprint(userRecord.ID),
+		accessTokenSecret,
+	)
+	if tokenError != nil {
+		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+			Err: tokenError,
+		})
+	}
+
+	refreshTokenSecret, secretError := utilities.CreateTokenSecret(
+		userSecretRecord.Hash,
+		passwordRecord.Hash,
+		utilities.GetEnv(utilities.GetEnvOptions{
+			DefaultValue: constants.TOKENS.DefaultRefreshTokenCommonSecret,
+			EnvName:      constants.ENV_NAMES.RefreshTokenCommonSecret,
+		}),
+	)
+	if secretError != nil {
+		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+			Err: secretError,
+		})
+	}
+	refreshToken, tokenError := utilities.CreateToken(
+		fmt.Sprint(userRecord.ID),
+		refreshTokenSecret,
+	)
+	if tokenError != nil {
+		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+			Err: tokenError,
+		})
+	}
+
+	return utilities.Response(utilities.ResponseOptions{
+		Context: context,
+		Data: fiber.Map{
+			"accessToken":  accessToken,
+			"refreshToken": refreshToken,
+		},
+	})
 }

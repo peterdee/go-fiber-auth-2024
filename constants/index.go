@@ -1,11 +1,11 @@
 package constants
 
 var ACTION_MESSAGES = ActionMessages{
-	LoadedEnvFile:      "Loaded .env file",
-	PGConnected:        "PostgreSQL connected",
-	PGCredentialsError: "Could not load PostgreSQL credentials",
-	ShutdownError:      "Error while gracefully shutting down the server",
-	ShutdownSuccess:    "Server gracefully stopped",
+	EnvLoadingError: "Could not load ENV variable",
+	LoadedEnvFile:   "Loaded .env file",
+	PGConnected:     "PostgreSQL connected",
+	ShutdownError:   "Error while gracefully shutting down the server",
+	ShutdownSuccess: "Server gracefully stopped",
 }
 
 const APP_NAME string = "GO FIBER AUTH 2024"
@@ -42,4 +42,11 @@ var RESPONSE_INFO = ResponseInfo{
 	MissingData:         "MISSING_DATA",
 	Ok:                  "OK",
 	Unauthorized:        "UNAUTHORIZED",
+}
+
+var TOKENS = Tokens{
+	DefaultAccessTokenCommonSecret:       "access-secret",
+	DefaultAccessTokenExpirationSeconds:  3600,
+	DefaultRefreshTokenCommonSecret:      "refresh-secret",
+	DefaultRefreshTokenExpirationSeconds: 36000,
 }

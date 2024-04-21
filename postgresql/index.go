@@ -3,8 +3,8 @@ package postgresql
 import (
 	"fmt"
 	"go-fiber-auth-2024/constants"
+	"go-fiber-auth-2024/utilities"
 	"log"
-	"os"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -13,20 +13,27 @@ import (
 
 var Database *gorm.DB
 
-func getEnvValue(envName string) string {
-	value := os.Getenv(envName)
-	if value == "" {
-		log.Fatalf("%s: %s", constants.ACTION_MESSAGES.PGCredentialsError, envName)
-	}
-	return value
-}
-
 func CreateDatabaseConnection() {
-	database := getEnvValue(constants.ENV_NAMES.PGDatabase)
-	host := getEnvValue(constants.ENV_NAMES.PGHost)
-	password := getEnvValue(constants.ENV_NAMES.PGPassword)
-	port := getEnvValue(constants.ENV_NAMES.PGPort)
-	username := getEnvValue(constants.ENV_NAMES.PGUsername)
+	database := utilities.GetEnv(utilities.GetEnvOptions{
+		EnvName:    constants.ENV_NAMES.PGDatabase,
+		IsRequired: true,
+	})
+	host := utilities.GetEnv(utilities.GetEnvOptions{
+		EnvName:    constants.ENV_NAMES.PGHost,
+		IsRequired: true,
+	})
+	password := utilities.GetEnv(utilities.GetEnvOptions{
+		EnvName:    constants.ENV_NAMES.PGPassword,
+		IsRequired: true,
+	})
+	port := utilities.GetEnv(utilities.GetEnvOptions{
+		EnvName:    constants.ENV_NAMES.PGPort,
+		IsRequired: true,
+	})
+	username := utilities.GetEnv(utilities.GetEnvOptions{
+		EnvName:    constants.ENV_NAMES.PGUsername,
+		IsRequired: true,
+	})
 
 	dsn := fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
