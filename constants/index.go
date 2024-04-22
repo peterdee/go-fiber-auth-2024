@@ -39,7 +39,9 @@ const PORT string = "2024"
 var RESPONSE_INFO = ResponseInfo{
 	EmailAlreadyInUse:   "EMAIL_ALREADY_IN_USE",
 	InternalServerError: "INTERNAL_SERVER_ERROR",
+	InvlaidToken:        "INVALID_TOKEN",
 	MissingData:         "MISSING_DATA",
+	MissingToken:        "MISSING_TOKEN",
 	Ok:                  "OK",
 	Unauthorized:        "UNAUTHORIZED",
 }

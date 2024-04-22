@@ -6,5 +6,6 @@ func Initialize(server *fiber.App) {
 	router := server.Group("/api/auth")
 
 	router.Post("/sign-in", signInController)
+	router.Post("/sign-out", signOutController)
 	router.Post("/sign-up", signUpController)
 }

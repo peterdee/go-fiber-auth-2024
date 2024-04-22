@@ -34,6 +34,8 @@ func signInController(context fiber.Ctx) error {
 
 	email := strings.Trim(strings.ToLower(payload.Email), " ")
 
+	// TODO: wrap in transaction
+
 	var userRecord postgresql.User
 	queryError := postgresql.
 		Database.
@@ -102,15 +104,12 @@ func signInController(context fiber.Ctx) error {
 		})
 	}
 
-	// TODO: create a fingerprint for a user
-	fmt.Println(
-		context.Get("user-agent"),
-		context.Get("accept-language"),
-		context.Context().RemoteAddr(),
-		context.IP(),
-		context.IPs(),
-		context.GetReqHeaders(),
-	)
+	fingerprint, fingerprintError := utilities.Fingerprint(context)
+	if fingerprintError != nil {
+		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+			Err: fingerprintError,
+		})
+	}
 
 	tokenPairId := gohelpers.RandomString(24)
 
@@ -121,6 +120,7 @@ func signInController(context fiber.Ctx) error {
 			DefaultValue: constants.TOKENS.DefaultAccessTokenCommonSecret,
 			EnvName:      constants.ENV_NAMES.AccessTokenCommonSecret,
 		}),
+		fingerprint,
 	)
 	if secretError != nil {
 		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
@@ -145,6 +145,7 @@ func signInController(context fiber.Ctx) error {
 			DefaultValue: constants.TOKENS.DefaultRefreshTokenCommonSecret,
 			EnvName:      constants.ENV_NAMES.RefreshTokenCommonSecret,
 		}),
+		fingerprint,
 	)
 	if secretError != nil {
 		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{

@@ -20,7 +20,10 @@ import (
 )
 
 func main() {
-	envSource := os.Getenv(constants.ENV_NAMES.EnvSource)
+	envSource := utilities.GetEnv(utilities.GetEnvOptions{
+		EnvName:    constants.ENV_NAMES.EnvSource,
+		IsRequired: true,
+	})
 	if envSource == constants.ENV_SOURCES.File {
 		if envError := godotenv.Load(); envError != nil {
 			log.Fatal(envError)

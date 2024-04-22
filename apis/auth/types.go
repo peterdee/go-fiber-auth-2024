@@ -5,6 +5,10 @@ type SignInPayload struct {
 	Password string `json:"password"`
 }
 
+type SignOutPayload struct {
+	RefreshToken string `json:"refreshToken"`
+}
+
 type SignUpPayload struct {
 	SignInPayload
 	FirstName string `json:"firstName"`

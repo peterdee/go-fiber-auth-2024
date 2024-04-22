@@ -35,7 +35,9 @@ type LocalsKeys struct {
 type ResponseInfo struct {
 	EmailAlreadyInUse   string
 	InternalServerError string
+	InvlaidToken        string
 	MissingData         string
+	MissingToken        string
 	Ok                  string
 	Unauthorized        string
 }
