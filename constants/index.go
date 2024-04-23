@@ -4,11 +4,14 @@ var ACTION_MESSAGES = ActionMessages{
 	EnvLoadingError: "Could not load ENV variable",
 	LoadedEnvFile:   "Loaded .env file",
 	PGConnected:     "PostgreSQL connected",
+	RedisConnected:  "Redis connected",
 	ShutdownError:   "Error while gracefully shutting down the server",
 	ShutdownSuccess: "Server gracefully stopped",
 }
 
 const APP_NAME string = "GO FIBER AUTH 2024"
+
+const DEFAULT_REDIS_HOST string = "localhost:6379"
 
 var ENV_NAMES = EnvNames{
 	AccessTokenCommonSecret:       "ACCESS_TOKEN_COMMON_SECRET",
@@ -20,6 +23,9 @@ var ENV_NAMES = EnvNames{
 	PGPort:                        "PG_PORT",
 	PGUsername:                    "PG_USERNAME",
 	Port:                          "PORT",
+	RedisHost:                     "REDIS_HOST",
+	RedisPassword:                 "REDIS_PASSWORD",
+	RedisUsername:                 "REDIS_USERNAME",
 	RefreshTokenCommonSecret:      "REFRESH_TOKEN_COMMON_SECRET",
 	RefreshTokenExpirationSeconds: "REFRESH_TOKEN_EXPIRATION_SECONDS",
 }

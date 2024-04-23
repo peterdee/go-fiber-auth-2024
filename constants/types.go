@@ -4,6 +4,7 @@ type ActionMessages struct {
 	EnvLoadingError string
 	LoadedEnvFile   string
 	PGConnected     string
+	RedisConnected  string
 	ShutdownError   string
 	ShutdownSuccess string
 }
@@ -18,6 +19,9 @@ type EnvNames struct {
 	PGPort                        string
 	PGUsername                    string
 	Port                          string
+	RedisHost                     string
+	RedisPassword                 string
+	RedisUsername                 string
 	RefreshTokenCommonSecret      string
 	RefreshTokenExpirationSeconds string
 }
