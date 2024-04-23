@@ -16,6 +16,7 @@ import (
 	"go-fiber-auth-2024/constants"
 	"go-fiber-auth-2024/middlewares"
 	"go-fiber-auth-2024/postgresql"
+	"go-fiber-auth-2024/redis"
 	"go-fiber-auth-2024/utilities"
 )
 
@@ -44,6 +45,7 @@ func main() {
 	app.Use(logger.New())
 
 	postgresql.CreateDatabaseConnection()
+	redis.CreateDatabaseConnection()
 
 	port := constants.PORT
 	if envPort := os.Getenv(constants.ENV_NAMES.Port); envPort != "" {
