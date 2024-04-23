@@ -1,12 +1,14 @@
 package constants
 
 var ACTION_MESSAGES = ActionMessages{
-	EnvLoadingError: "Could not load ENV variable",
-	LoadedEnvFile:   "Loaded .env file",
-	PGConnected:     "PostgreSQL connected",
-	RedisConnected:  "Redis connected",
-	ShutdownError:   "Error while gracefully shutting down the server",
-	ShutdownSuccess: "Server gracefully stopped",
+	EnvLoadingError:       "Could not load ENV variable",
+	LoadedEnvFile:         "Loaded .env file",
+	PGConnected:           "PostgreSQL connected",
+	PGConnectionClosed:    "PostgreSQL connection closed",
+	RedisConnected:        "Redis connected",
+	ShutdownError:         "Error while gracefully shutting down the server",
+	ShutdownSuccess:       "Server gracefully stopped",
+	UserIDAssertionFailed: "userId assertion failed",
 }
 
 const APP_NAME string = "GO FIBER AUTH 2024"
@@ -37,12 +39,19 @@ var ENV_SOURCES = EnvSources{
 
 var LOCALS_KEYS = LocalsKeys{
 	RequestReceivedTimestamp: "requestReceivedTimestamp",
+	TokenPairId:              "tokenPairId",
 	UserId:                   "userId",
 }
 
 const PORT string = "2024"
 
+var REDIS_PREFIXES = RedisPrefixes{
+	PasswordHash: "phash",
+	SecretHash:   "shash",
+}
+
 var RESPONSE_INFO = ResponseInfo{
+	AccessTokenExpired:  "ACCESS_TOKEN_EXPIRED",
 	EmailAlreadyInUse:   "EMAIL_ALREADY_IN_USE",
 	InternalServerError: "INTERNAL_SERVER_ERROR",
 	InvlaidToken:        "INVALID_TOKEN",

@@ -45,11 +45,13 @@ func signUpController(context fiber.Ctx) error {
 		First(&existingUserRecord).
 		Error
 	if queryError != nil && queryError.Error() != "record not found" {
+		tx.Rollback()
 		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
 			Err: queryError,
 		})
 	}
 	if existingUserRecord.ID != 0 {
+		tx.Rollback()
 		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
 			Info:   constants.RESPONSE_INFO.EmailAlreadyInUse,
 			Status: fiber.StatusBadRequest,

@@ -10,6 +10,8 @@ import (
 	"github.com/julyskies/gohelpers"
 
 	"go-fiber-auth-2024/constants"
+	"go-fiber-auth-2024/postgresql"
+	"go-fiber-auth-2024/redis"
 	"go-fiber-auth-2024/utilities"
 )
 
@@ -37,11 +39,11 @@ func Authorization(context fiber.Ctx) error {
 		})
 	}
 
-	issuedAt := claims.Issued.Time().UnixNano() / int64(time.Millisecond)
+	issuedAtSeconds := claims.Issued.Time().UnixNano() / int64(time.Millisecond)
 	tokenPairId := claims.ID
-	userIdRaw := claims.Subject
+	userIdString := claims.Subject
 
-	if issuedAt == 0 || tokenPairId == "" || userIdRaw == "" {
+	if issuedAtSeconds == 0 || tokenPairId == "" || userIdString == "" {
 		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
 			Info:   constants.RESPONSE_INFO.InvlaidToken,
 			Status: fiber.StatusUnauthorized,
@@ -58,16 +60,72 @@ func Authorization(context fiber.Ctx) error {
 			Err: convertError,
 		})
 	}
-	if issuedAt+int64(accessTokenExpiration) < gohelpers.MakeTimestamp() {
-		// TODO: expiration error
+	if issuedAtSeconds+int64(accessTokenExpiration) < gohelpers.MakeTimestamp() {
+		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+			Info:   constants.RESPONSE_INFO.AccessTokenExpired,
+			Status: fiber.StatusUnauthorized,
+		})
 	}
 
-	// TODO: validate token & proceed
+	fingerprint, fingerprintError := utilities.Fingerprint(context)
+	if fingerprintError != nil {
+		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+			Err: fingerprintError,
+		})
+	}
 
-	context.Locals(
-		constants.LOCALS_KEYS.UserId,
-		0,
+	// TODO: get user secret hash & user password hash for token secret
+	userSecretHash, redisError := redis.Client.Get(context.Context(), redis.CreateKey(
+		constants.REDIS_PREFIXES.SecretHash,
+		userIdString,
+	)).Result()
+	if redisError != nil {
+		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+			Err: fingerprintError,
+		})
+	}
+	if userSecretHash == "" {
+		var userSecretRecord postgresql.UserSecret
+		queryError := postgresql.Database.Where(...).First(&userSecretRecord).Error
+		if queryError != nil {
+			// TODO: handle query error
+		}
+	}
+
+	userPasswordHash := ""
+
+	tokenSecret, tokenSecretError := utilities.CreateTokenSecret(
+		userSecretHash,
+		userPasswordHash,
+		utilities.GetEnv(utilities.GetEnvOptions{
+			DefaultValue: constants.TOKENS.DefaultAccessTokenCommonSecret,
+			EnvName:      constants.ENV_NAMES.AccessTokenCommonSecret,
+		}),
+		fingerprint,
 	)
+	if tokenSecretError != nil {
+		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+			Err: tokenSecretError,
+		})
+	}
+
+	tokenIsValid := utilities.VerifyToken(accessToken, tokenSecret)
+	if !tokenIsValid {
+		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+			Info:   constants.RESPONSE_INFO.InvlaidToken,
+			Status: fiber.StatusUnauthorized,
+		})
+	}
+
+	userId, convertError := strconv.Atoi(userIdString)
+	if convertError != nil {
+		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+			Err: convertError,
+		})
+	}
+
+	context.Locals(constants.LOCALS_KEYS.TokenPairId, tokenPairId)
+	context.Locals(constants.LOCALS_KEYS.UserId, userId)
 
 	return context.Next()
 }

@@ -1,12 +1,14 @@
 package constants
 
 type ActionMessages struct {
-	EnvLoadingError string
-	LoadedEnvFile   string
-	PGConnected     string
-	RedisConnected  string
-	ShutdownError   string
-	ShutdownSuccess string
+	EnvLoadingError       string
+	LoadedEnvFile         string
+	PGConnected           string
+	PGConnectionClosed    string
+	RedisConnected        string
+	ShutdownError         string
+	ShutdownSuccess       string
+	UserIDAssertionFailed string
 }
 
 type EnvNames struct {
@@ -33,10 +35,17 @@ type EnvSources struct {
 
 type LocalsKeys struct {
 	RequestReceivedTimestamp string
+	TokenPairId              string
 	UserId                   string
 }
 
+type RedisPrefixes struct {
+	PasswordHash string
+	SecretHash   string
+}
+
 type ResponseInfo struct {
+	AccessTokenExpired  string
 	EmailAlreadyInUse   string
 	InternalServerError string
 	InvlaidToken        string

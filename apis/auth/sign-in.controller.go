@@ -34,15 +34,20 @@ func signInController(context fiber.Ctx) error {
 
 	email := strings.Trim(strings.ToLower(payload.Email), " ")
 
-	// TODO: wrap in transaction
+	tx := postgresql.Database.Begin()
+	if tx.Error != nil {
+		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+			Err: tx.Error,
+		})
+	}
 
 	var userRecord postgresql.User
-	queryError := postgresql.
-		Database.
+	queryError := tx.
 		Where(&postgresql.User{Email: email}).
 		First(&userRecord).
 		Error
 	if queryError != nil {
+		tx.Rollback()
 		if queryError.Error() == "record not found" {
 			return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
 				Info:   constants.RESPONSE_INFO.Unauthorized,
@@ -55,12 +60,12 @@ func signInController(context fiber.Ctx) error {
 	}
 
 	var passwordRecord postgresql.Password
-	queryError = postgresql.
-		Database.
+	queryError = tx.
 		Where(&postgresql.Password{UserID: userRecord.ID}).
 		First(&passwordRecord).
 		Error
 	if queryError != nil {
+		tx.Rollback()
 		if queryError.Error() == "record not found" {
 			return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
 				Info:   constants.RESPONSE_INFO.Unauthorized,
@@ -75,11 +80,13 @@ func signInController(context fiber.Ctx) error {
 	password := strings.Trim(payload.Password, " ")
 	isValid, matchError := utilities.ComparePasswordAndHash(password, passwordRecord.Hash)
 	if matchError != nil {
+		tx.Rollback()
 		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
 			Err: matchError,
 		})
 	}
 	if !isValid {
+		tx.Rollback()
 		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
 			Info:   constants.RESPONSE_INFO.Unauthorized,
 			Status: fiber.StatusUnauthorized,
@@ -87,12 +94,12 @@ func signInController(context fiber.Ctx) error {
 	}
 
 	var userSecretRecord postgresql.Password
-	queryError = postgresql.
-		Database.
+	queryError = tx.
 		Where(&postgresql.UserSecret{UserID: userRecord.ID}).
 		First(&userSecretRecord).
 		Error
 	if queryError != nil {
+		tx.Rollback()
 		if queryError.Error() == "record not found" {
 			return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
 				Info:   constants.RESPONSE_INFO.Unauthorized,
@@ -106,6 +113,7 @@ func signInController(context fiber.Ctx) error {
 
 	fingerprint, fingerprintError := utilities.Fingerprint(context)
 	if fingerprintError != nil {
+		tx.Rollback()
 		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
 			Err: fingerprintError,
 		})
@@ -123,6 +131,7 @@ func signInController(context fiber.Ctx) error {
 		fingerprint,
 	)
 	if secretError != nil {
+		tx.Rollback()
 		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
 			Err: secretError,
 		})
@@ -133,6 +142,7 @@ func signInController(context fiber.Ctx) error {
 		tokenPairId,
 	)
 	if tokenError != nil {
+		tx.Rollback()
 		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
 			Err: tokenError,
 		})
@@ -148,6 +158,7 @@ func signInController(context fiber.Ctx) error {
 		fingerprint,
 	)
 	if secretError != nil {
+		tx.Rollback()
 		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
 			Err: secretError,
 		})
@@ -158,8 +169,17 @@ func signInController(context fiber.Ctx) error {
 		tokenPairId,
 	)
 	if tokenError != nil {
+		tx.Rollback()
 		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
 			Err: tokenError,
+		})
+	}
+
+	commitError := tx.Commit().Error
+	if commitError != nil {
+		tx.Rollback()
+		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+			Err: commitError,
 		})
 	}
 

@@ -2,6 +2,7 @@ package redis
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/redis/go-redis/v9"
@@ -37,4 +38,8 @@ func CreateDatabaseConnection() {
 	}
 
 	log.Println(constants.ACTION_MESSAGES.RedisConnected)
+}
+
+func CreateKey(prefix string, userId string) string {
+	return fmt.Sprintf("%s-%s", prefix, userId)
 }

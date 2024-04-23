@@ -7,5 +7,5 @@ import (
 )
 
 func ShutdownSuccess() {
-	log.Print(constants.ACTION_MESSAGES.ShutdownSuccess)
+	log.Println(constants.ACTION_MESSAGES.ShutdownSuccess)
 }

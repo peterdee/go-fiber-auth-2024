@@ -2,13 +2,14 @@ package postgresql
 
 import (
 	"fmt"
-	"go-fiber-auth-2024/constants"
-	"go-fiber-auth-2024/utilities"
 	"log"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+
+	"go-fiber-auth-2024/constants"
+	"go-fiber-auth-2024/utilities"
 )
 
 var Database *gorm.DB

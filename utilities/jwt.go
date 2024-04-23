@@ -20,14 +20,14 @@ type TokenClaims struct {
 
 func CreateTokenSecret(
 	userSecretHash,
-	passwordHash,
+	userPasswordHash,
 	commonSecret,
 	fingerprint string,
 ) (string, error) {
 	hashed, hashError := CreateHash(fmt.Sprintf(
 		"%s:%s:%s:%s",
 		userSecretHash,
-		passwordHash,
+		userPasswordHash,
 		commonSecret,
 		fingerprint,
 	))
