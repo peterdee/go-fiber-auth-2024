@@ -39,7 +39,7 @@ func Authorization(context fiber.Ctx) error {
 		})
 	}
 
-	issuedAtSeconds := claims.Issued.Time().UnixNano() / int64(time.Millisecond)
+	issuedAtSeconds := claims.Issued.Time().UnixMilli() / int64(time.Millisecond)
 	tokenPairId := claims.ID
 	userIdString := claims.Subject
 
@@ -60,9 +60,56 @@ func Authorization(context fiber.Ctx) error {
 			Err: convertError,
 		})
 	}
+	// TODO: fix expiration check
+	fmt.Println(
+		issuedAtSeconds+int64(accessTokenExpiration),
+		issuedAtSeconds,
+		int64(accessTokenExpiration),
+		gohelpers.MakeTimestamp(),
+		time.Now().Unix(),
+	)
 	if issuedAtSeconds+int64(accessTokenExpiration) < gohelpers.MakeTimestamp() {
 		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
 			Info:   constants.RESPONSE_INFO.AccessTokenExpired,
+			Status: fiber.StatusUnauthorized,
+		})
+	}
+
+	accessTokenExpirationSecondsString := utilities.GetEnv(utilities.GetEnvOptions{
+		DefaultValue: fmt.Sprint(constants.TOKENS.DefaultAccessTokenExpirationSeconds),
+		EnvName:      constants.ENV_NAMES.AccessTokenExpirationSeconds,
+	})
+	accessTokenExpirationSeconds, convertError := strconv.Atoi(
+		accessTokenExpirationSecondsString,
+	)
+	if convertError != nil {
+		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+			Err: convertError,
+		})
+	}
+	tokenPairIdKey := redis.CreateKey(
+		constants.REDIS_PREFIXES.BlacklistedTokenPair,
+		fmt.Sprintf("%s-%s", userIdString, claims.ID),
+	)
+	tokenPairId, redisError := redis.Client.Get(context.Context(), tokenPairIdKey).Result()
+	if redisError != nil {
+		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+			Err: redisError,
+		})
+	}
+	if tokenPairId != "" {
+		expireError := redis.Client.Expire(
+			context.Context(),
+			tokenPairIdKey,
+			time.Duration(accessTokenExpirationSeconds)*time.Second,
+		).Err()
+		if expireError != nil {
+			return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+				Err: expireError,
+			})
+		}
+		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+			Info:   constants.RESPONSE_INFO.AccessTokenBlacklisted,
 			Status: fiber.StatusUnauthorized,
 		})
 	}
@@ -74,7 +121,6 @@ func Authorization(context fiber.Ctx) error {
 		})
 	}
 
-	// TODO: get user secret hash & user password hash for token secret
 	userId, convertError := strconv.Atoi(userIdString)
 	if convertError != nil {
 		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
@@ -82,10 +128,14 @@ func Authorization(context fiber.Ctx) error {
 		})
 	}
 
-	userSecretHash, redisError := redis.Client.Get(context.Context(), redis.CreateKey(
-		constants.REDIS_PREFIXES.SecretHash,
+	userSecretHashKey := redis.CreateKey(
+		constants.REDIS_PREFIXES.PasswordHash,
 		userIdString,
-	)).Result()
+	)
+	userSecretHash, redisError := redis.Client.Get(
+		context.Context(),
+		userSecretHashKey,
+	).Result()
 	if redisError != nil {
 		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
 			Err: redisError,
@@ -124,14 +174,26 @@ func Authorization(context fiber.Ctx) error {
 			})
 		}
 		userSecretHash = userSecretRecord.Secret
+	} else {
+		expireError := redis.Client.Expire(
+			context.Context(),
+			userSecretHashKey,
+			time.Duration(accessTokenExpirationSeconds)*time.Second,
+		).Err()
+		if expireError != nil {
+			return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+				Err: expireError,
+			})
+		}
 	}
 
+	userPasswordHashKey := redis.CreateKey(
+		constants.REDIS_PREFIXES.PasswordHash,
+		userIdString,
+	)
 	userPasswordHash, redisError := redis.Client.Get(
 		context.Context(),
-		redis.CreateKey(
-			constants.REDIS_PREFIXES.PasswordHash,
-			userIdString,
-		),
+		userPasswordHashKey,
 	).Result()
 	if redisError != nil {
 		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
@@ -171,6 +233,17 @@ func Authorization(context fiber.Ctx) error {
 			})
 		}
 		userPasswordHash = userPasswordRecord.Hash
+	} else {
+		expireError := redis.Client.Expire(
+			context.Context(),
+			userPasswordHashKey,
+			time.Duration(accessTokenExpirationSeconds)*time.Second,
+		).Err()
+		if expireError != nil {
+			return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+				Err: expireError,
+			})
+		}
 	}
 
 	tokenSecret, tokenSecretError := utilities.CreateTokenSecret(

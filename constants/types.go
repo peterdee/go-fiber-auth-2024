@@ -40,19 +40,21 @@ type LocalsKeys struct {
 }
 
 type RedisPrefixes struct {
-	PasswordHash string
-	SecretHash   string
+	BlacklistedTokenPair string
+	PasswordHash         string
+	SecretHash           string
 }
 
 type ResponseInfo struct {
-	AccessTokenExpired  string
-	EmailAlreadyInUse   string
-	InternalServerError string
-	InvlaidToken        string
-	MissingData         string
-	MissingToken        string
-	Ok                  string
-	Unauthorized        string
+	AccessTokenBlacklisted string
+	AccessTokenExpired     string
+	EmailAlreadyInUse      string
+	InternalServerError    string
+	InvlaidToken           string
+	MissingData            string
+	MissingToken           string
+	Ok                     string
+	Unauthorized           string
 }
 
 type Tokens struct {

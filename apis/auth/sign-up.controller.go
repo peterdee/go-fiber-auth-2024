@@ -96,7 +96,7 @@ func signUpController(context fiber.Ctx) error {
 	if secretError != nil {
 		tx.Rollback()
 		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
-			Err: hashError,
+			Err: secretError,
 		})
 	}
 	result = tx.Create(&postgresql.UserSecret{

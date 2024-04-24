@@ -10,6 +10,7 @@ import (
 	"github.com/gofiber/fiber/v3/middleware/logger"
 	"github.com/joho/godotenv"
 
+	apiAccount "go-fiber-auth-2024/apis/account"
 	apiAuth "go-fiber-auth-2024/apis/auth"
 	apiIndex "go-fiber-auth-2024/apis/index"
 	apiUser "go-fiber-auth-2024/apis/user"
@@ -52,6 +53,7 @@ func main() {
 		port = envPort
 	}
 
+	apiAccount.Initialize(app)
 	apiAuth.Initialize(app)
 	apiIndex.Initialize(app)
 	apiUser.Initialize(app)

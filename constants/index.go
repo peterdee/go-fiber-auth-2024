@@ -46,19 +46,21 @@ var LOCALS_KEYS = LocalsKeys{
 const PORT string = "2024"
 
 var REDIS_PREFIXES = RedisPrefixes{
-	PasswordHash: "phash",
-	SecretHash:   "shash",
+	BlacklistedTokenPair: "bltpair",
+	PasswordHash:         "phash",
+	SecretHash:           "shash",
 }
 
 var RESPONSE_INFO = ResponseInfo{
-	AccessTokenExpired:  "ACCESS_TOKEN_EXPIRED",
-	EmailAlreadyInUse:   "EMAIL_ALREADY_IN_USE",
-	InternalServerError: "INTERNAL_SERVER_ERROR",
-	InvlaidToken:        "INVALID_TOKEN",
-	MissingData:         "MISSING_DATA",
-	MissingToken:        "MISSING_TOKEN",
-	Ok:                  "OK",
-	Unauthorized:        "UNAUTHORIZED",
+	AccessTokenBlacklisted: "ACCESS_TOKEN_BLACKLISTED",
+	AccessTokenExpired:     "ACCESS_TOKEN_EXPIRED",
+	EmailAlreadyInUse:      "EMAIL_ALREADY_IN_USE",
+	InternalServerError:    "INTERNAL_SERVER_ERROR",
+	InvlaidToken:           "INVALID_TOKEN",
+	MissingData:            "MISSING_DATA",
+	MissingToken:           "MISSING_TOKEN",
+	Ok:                     "OK",
+	Unauthorized:           "UNAUTHORIZED",
 }
 
 var TOKENS = Tokens{
