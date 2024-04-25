@@ -93,7 +93,7 @@ func signInController(context fiber.Ctx) error {
 		})
 	}
 
-	var userSecretRecord postgresql.Password
+	var userSecretRecord postgresql.UserSecret
 	queryError = tx.
 		Where(&postgresql.UserSecret{UserID: userRecord.ID}).
 		First(&userSecretRecord).
@@ -111,18 +111,11 @@ func signInController(context fiber.Ctx) error {
 		})
 	}
 
-	fingerprint, fingerprintError := utilities.Fingerprint(context)
-	if fingerprintError != nil {
-		tx.Rollback()
-		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
-			Err: fingerprintError,
-		})
-	}
-
+	fingerprint := utilities.Fingerprint(context)
 	tokenPairId := gohelpers.RandomString(24)
 
-	accessTokenSecret, secretError := utilities.CreateTokenSecret(
-		userSecretRecord.Hash,
+	accessTokenSecret := utilities.CreateTokenSecret(
+		userSecretRecord.Secret,
 		passwordRecord.Hash,
 		utilities.GetEnv(utilities.GetEnvOptions{
 			DefaultValue: constants.TOKENS.DefaultAccessTokenCommonSecret,
@@ -130,12 +123,6 @@ func signInController(context fiber.Ctx) error {
 		}),
 		fingerprint,
 	)
-	if secretError != nil {
-		tx.Rollback()
-		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
-			Err: secretError,
-		})
-	}
 	accessToken, tokenError := utilities.CreateToken(
 		fmt.Sprint(userRecord.ID),
 		accessTokenSecret,
@@ -148,8 +135,8 @@ func signInController(context fiber.Ctx) error {
 		})
 	}
 
-	refreshTokenSecret, secretError := utilities.CreateTokenSecret(
-		userSecretRecord.Hash,
+	refreshTokenSecret := utilities.CreateTokenSecret(
+		userSecretRecord.Secret,
 		passwordRecord.Hash,
 		utilities.GetEnv(utilities.GetEnvOptions{
 			DefaultValue: constants.TOKENS.DefaultRefreshTokenCommonSecret,
@@ -157,12 +144,6 @@ func signInController(context fiber.Ctx) error {
 		}),
 		fingerprint,
 	)
-	if secretError != nil {
-		tx.Rollback()
-		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
-			Err: secretError,
-		})
-	}
 	refreshToken, tokenError := utilities.CreateToken(
 		fmt.Sprint(userRecord.ID),
 		refreshTokenSecret,

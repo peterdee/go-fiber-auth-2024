@@ -8,9 +8,9 @@ type User struct {
 	FirstName string
 	LastName  string
 
-	Password          Password
-	UsedRefreshTokens []UsedRefreshToken
-	UserSecret        UserSecret
+	Password          Password           `json:"-"`
+	UsedRefreshTokens []UsedRefreshToken `json:"-"`
+	UserSecret        UserSecret         `json:"-"`
 }
 
 type Password struct {

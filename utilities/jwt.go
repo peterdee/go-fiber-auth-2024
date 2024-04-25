@@ -1,6 +1,8 @@
 package utilities
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -23,18 +25,15 @@ func CreateTokenSecret(
 	userPasswordHash,
 	commonSecret,
 	fingerprint string,
-) (string, error) {
-	hashed, hashError := CreateHash(fmt.Sprintf(
+) string {
+	hashed := md5.Sum([]byte(fmt.Sprintf(
 		"%s:%s:%s:%s",
 		userSecretHash,
 		userPasswordHash,
 		commonSecret,
 		fingerprint,
-	))
-	if hashError != nil {
-		return "", hashError
-	}
-	return hashed, nil
+	)))
+	return hex.EncodeToString(hashed[:])
 }
 
 func CreateToken(userId string, tokenSecret string, pairId string) (string, error) {

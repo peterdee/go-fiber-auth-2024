@@ -34,18 +34,18 @@ func Authorization(context fiber.Ctx) error {
 	claims, decodeError := utilities.DecodeToken(accessToken)
 	if decodeError != nil {
 		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
-			Info:   constants.RESPONSE_INFO.InvlaidToken,
+			Info:   constants.RESPONSE_INFO.InvalidToken,
 			Status: fiber.StatusUnauthorized,
 		})
 	}
 
-	issuedAtSeconds := claims.Issued.Time().UnixMilli() / int64(time.Millisecond)
+	issuedAtSeconds := claims.Issued.Time().Unix()
 	tokenPairId := claims.ID
 	userIdString := claims.Subject
 
 	if issuedAtSeconds == 0 || tokenPairId == "" || userIdString == "" {
 		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
-			Info:   constants.RESPONSE_INFO.InvlaidToken,
+			Info:   constants.RESPONSE_INFO.InvalidToken,
 			Status: fiber.StatusUnauthorized,
 		})
 	}
@@ -60,15 +60,7 @@ func Authorization(context fiber.Ctx) error {
 			Err: convertError,
 		})
 	}
-	// TODO: fix expiration check
-	fmt.Println(
-		issuedAtSeconds+int64(accessTokenExpiration),
-		issuedAtSeconds,
-		int64(accessTokenExpiration),
-		gohelpers.MakeTimestamp(),
-		time.Now().Unix(),
-	)
-	if issuedAtSeconds+int64(accessTokenExpiration) < gohelpers.MakeTimestamp() {
+	if issuedAtSeconds+int64(accessTokenExpiration) < gohelpers.MakeTimestampSeconds() {
 		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
 			Info:   constants.RESPONSE_INFO.AccessTokenExpired,
 			Status: fiber.StatusUnauthorized,
@@ -92,7 +84,7 @@ func Authorization(context fiber.Ctx) error {
 		fmt.Sprintf("%s-%s", userIdString, claims.ID),
 	)
 	tokenPairId, redisError := redis.Client.Get(context.Context(), tokenPairIdKey).Result()
-	if redisError != nil {
+	if redisError != nil && redisError.Error() != "redis: nil" {
 		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
 			Err: redisError,
 		})
@@ -114,12 +106,7 @@ func Authorization(context fiber.Ctx) error {
 		})
 	}
 
-	fingerprint, fingerprintError := utilities.Fingerprint(context)
-	if fingerprintError != nil {
-		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
-			Err: fingerprintError,
-		})
-	}
+	fingerprint := utilities.Fingerprint(context)
 
 	userId, convertError := strconv.Atoi(userIdString)
 	if convertError != nil {
@@ -136,7 +123,7 @@ func Authorization(context fiber.Ctx) error {
 		context.Context(),
 		userSecretHashKey,
 	).Result()
-	if redisError != nil {
+	if redisError != nil && redisError.Error() != "redis: nil" {
 		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
 			Err: redisError,
 		})
@@ -195,7 +182,7 @@ func Authorization(context fiber.Ctx) error {
 		context.Context(),
 		userPasswordHashKey,
 	).Result()
-	if redisError != nil {
+	if redisError != nil && redisError.Error() != "redis: nil" {
 		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
 			Err: redisError,
 		})
@@ -246,7 +233,7 @@ func Authorization(context fiber.Ctx) error {
 		}
 	}
 
-	tokenSecret, tokenSecretError := utilities.CreateTokenSecret(
+	tokenSecret := utilities.CreateTokenSecret(
 		userSecretHash,
 		userPasswordHash,
 		utilities.GetEnv(utilities.GetEnvOptions{
@@ -255,16 +242,11 @@ func Authorization(context fiber.Ctx) error {
 		}),
 		fingerprint,
 	)
-	if tokenSecretError != nil {
-		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
-			Err: tokenSecretError,
-		})
-	}
 
 	tokenIsValid := utilities.VerifyToken(accessToken, tokenSecret)
 	if !tokenIsValid {
 		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
-			Info:   constants.RESPONSE_INFO.InvlaidToken,
+			Info:   constants.RESPONSE_INFO.InvalidToken,
 			Status: fiber.StatusUnauthorized,
 		})
 	}

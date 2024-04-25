@@ -11,7 +11,7 @@ import (
 )
 
 func getAccountController(context fiber.Ctx) error {
-	userId, ok := context.Locals(constants.LOCALS_KEYS.UserId).(uint)
+	userId, ok := context.Locals(constants.LOCALS_KEYS.UserId).(int)
 	if !ok {
 		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
 			Err: errors.New(constants.ACTION_MESSAGES.UserIDAssertionFailed),

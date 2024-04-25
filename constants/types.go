@@ -50,7 +50,7 @@ type ResponseInfo struct {
 	AccessTokenExpired     string
 	EmailAlreadyInUse      string
 	InternalServerError    string
-	InvlaidToken           string
+	InvalidToken           string
 	MissingData            string
 	MissingToken           string
 	Ok                     string
