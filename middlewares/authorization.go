@@ -83,13 +83,16 @@ func Authorization(context fiber.Ctx) error {
 		constants.REDIS_PREFIXES.BlacklistedTokenPair,
 		fmt.Sprintf("%s-%s", userIdString, claims.ID),
 	)
-	tokenPairId, redisError := redis.Client.Get(context.Context(), tokenPairIdKey).Result()
+	blacklistedTokenPairId, redisError := redis.Client.Get(
+		context.Context(),
+		tokenPairIdKey,
+	).Result()
 	if redisError != nil && redisError.Error() != "redis: nil" {
 		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
 			Err: redisError,
 		})
 	}
-	if tokenPairId != "" {
+	if blacklistedTokenPairId != "" {
 		expireError := redis.Client.Expire(
 			context.Context(),
 			tokenPairIdKey,

@@ -1,14 +1,14 @@
 package constants
 
 type ActionMessages struct {
-	EnvLoadingError       string
-	LoadedEnvFile         string
-	PGConnected           string
-	PGConnectionClosed    string
-	RedisConnected        string
-	ShutdownError         string
-	ShutdownSuccess       string
-	UserIDAssertionFailed string
+	EnvLoadingError     string
+	LoadedEnvFile       string
+	PGConnected         string
+	PGConnectionClosed  string
+	RedisConnected      string
+	ShutdownError       string
+	ShutdownSuccess     string
+	TypeAssertionFailed string
 }
 
 type EnvNames struct {

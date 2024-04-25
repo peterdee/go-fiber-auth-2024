@@ -1,14 +1,14 @@
 package constants
 
 var ACTION_MESSAGES = ActionMessages{
-	EnvLoadingError:       "Could not load ENV variable",
-	LoadedEnvFile:         "Loaded .env file",
-	PGConnected:           "PostgreSQL connected",
-	PGConnectionClosed:    "PostgreSQL connection closed",
-	RedisConnected:        "Redis connected",
-	ShutdownError:         "Error while gracefully shutting down the server",
-	ShutdownSuccess:       "Server gracefully stopped",
-	UserIDAssertionFailed: "userId assertion failed",
+	EnvLoadingError:     "Could not load ENV variable",
+	LoadedEnvFile:       "Loaded .env file",
+	PGConnected:         "PostgreSQL connected",
+	PGConnectionClosed:  "PostgreSQL connection closed",
+	RedisConnected:      "Redis connected",
+	ShutdownError:       "Error while gracefully shutting down the server",
+	ShutdownSuccess:     "Server gracefully stopped",
+	TypeAssertionFailed: "type assertion failed",
 }
 
 const APP_NAME string = "GO FIBER AUTH 2024"

@@ -9,7 +9,9 @@ import (
 func Initialize(server *fiber.App) {
 	router := server.Group("/api/auth")
 
+	router.Post("/refresh", refreshTokensController)
 	router.Post("/sign-in", signInController)
-	router.Post("/sign-out", middlewares.Authorization, signOutController)
+	router.Post("/sign-out", signOutController, middlewares.Authorization)
+	router.Get("/sign-out/complete", signOutCompleteController, middlewares.Authorization)
 	router.Post("/sign-up", signUpController)
 }

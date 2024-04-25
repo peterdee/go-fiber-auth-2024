@@ -35,13 +35,22 @@ func signOutController(context fiber.Ctx) error {
 		})
 	}
 
-	refreshToken := strings.Trim(strings.ToLower(payload.RefreshToken), " ")
-	userId, ok := context.Locals(constants.LOCALS_KEYS.UserId).(uint)
+	accessTokenPairId := context.Locals(constants.LOCALS_KEYS.TokenPairId)
+	userId, ok := context.Locals(constants.LOCALS_KEYS.UserId).(int)
 	if !ok {
 		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
-			Err: errors.New(constants.ACTION_MESSAGES.UserIDAssertionFailed),
+			Err: errors.New(constants.ACTION_MESSAGES.TypeAssertionFailed),
 		})
 	}
+
+	refreshToken := strings.Trim(payload.RefreshToken, " ")
+	refreshTokenClaims, decodeError := utilities.DecodeToken(refreshToken)
+	if decodeError != nil {
+		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+			Err: decodeError,
+		})
+	}
+	refreshTokenPairId := refreshTokenClaims.ID
 
 	tx := postgresql.Database.Begin()
 	if tx.Error != nil {
@@ -50,17 +59,9 @@ func signOutController(context fiber.Ctx) error {
 		})
 	}
 
-	claims, decodeError := utilities.DecodeToken(refreshToken)
-	if decodeError != nil {
-		tx.Rollback()
-		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
-			Err: decodeError,
-		})
-	}
-
 	var refreshTokenRecord postgresql.UsedRefreshToken
 	queryError := tx.
-		Where(&postgresql.UsedRefreshToken{Token: refreshToken, UserID: userId}).
+		Where(&postgresql.UsedRefreshToken{Token: refreshToken, UserID: uint(userId)}).
 		First(&refreshTokenRecord).
 		Error
 	if queryError != nil && queryError.Error() != "record not found" {
@@ -70,8 +71,8 @@ func signOutController(context fiber.Ctx) error {
 		})
 	}
 	if (refreshTokenRecord.ID != 0) ||
-		(context.Locals(constants.LOCALS_KEYS.TokenPairId) != claims.ID) {
-		secret, secretError := utilities.CreateUserSecret(userId)
+		(accessTokenPairId != refreshTokenPairId) {
+		secret, secretError := utilities.CreateUserSecret(uint(userId))
 		if secretError != nil {
 			tx.Rollback()
 			return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
@@ -115,7 +116,7 @@ func signOutController(context fiber.Ctx) error {
 		})
 	}
 
-	issuedAtSeconds := claims.Issued.Time().UnixNano() / int64(time.Millisecond)
+	issuedAtSeconds := refreshTokenClaims.Issued.Time().Unix()
 	refreshTokenExpirationSecondsString := utilities.GetEnv(utilities.GetEnvOptions{
 		DefaultValue: fmt.Sprint(constants.TOKENS.DefaultRefreshTokenExpirationSeconds),
 		EnvName:      constants.ENV_NAMES.RefreshTokenExpirationSeconds,
@@ -130,12 +131,11 @@ func signOutController(context fiber.Ctx) error {
 		})
 	}
 
-	usedRefreshTokenRecord := postgresql.UsedRefreshToken{
+	queryError = tx.Create(&postgresql.UsedRefreshToken{
 		ExpiresAt: issuedAtSeconds + int64(refreshTokenExpirationSeconds),
 		Token:     refreshToken,
-		UserID:    userId,
-	}
-	queryError = tx.Create(usedRefreshTokenRecord).Error
+		UserID:    uint(userId),
+	}).Error
 	if queryError != nil {
 		tx.Rollback()
 		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
@@ -167,9 +167,9 @@ func signOutController(context fiber.Ctx) error {
 		context.Context(),
 		redis.CreateKey(
 			constants.REDIS_PREFIXES.BlacklistedTokenPair,
-			fmt.Sprintf("%d-%s", userId, claims.ID),
+			fmt.Sprintf("%d-%s", userId, refreshTokenPairId),
 		),
-		claims.ID,
+		refreshTokenPairId,
 		time.Duration(accessTokenExpirationSeconds)*time.Second,
 	).Err()
 	if setError != nil {
