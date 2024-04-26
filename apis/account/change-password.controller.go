@@ -9,6 +9,7 @@ import (
 
 	"go-fiber-auth-2024/constants"
 	"go-fiber-auth-2024/postgresql"
+	"go-fiber-auth-2024/redis"
 	"go-fiber-auth-2024/utilities"
 )
 
@@ -42,9 +43,20 @@ func changePasswordController(context fiber.Ctx) error {
 	newPassword := strings.Trim(payload.NewPassword, " ")
 	oldPassword := strings.Trim(payload.OldPassword, " ")
 
+	tx := postgresql.Database.Begin()
+	if tx.Error != nil {
+		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+			Err: tx.Error,
+		})
+	}
+
 	var userPasswordRecord postgresql.Password
-	queryError := postgresql.Database.Where("user_id = ?", userId).First(&userPasswordRecord).Error
+	queryError := tx.
+		Where("user_id = ?", userId).
+		First(&userPasswordRecord).
+		Error
 	if queryError != nil {
+		tx.Rollback()
 		if queryError.Error() == "record not found" {
 			return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
 				Info:   constants.RESPONSE_INFO.Unauthorized,
@@ -61,11 +73,13 @@ func changePasswordController(context fiber.Ctx) error {
 		userPasswordRecord.Hash,
 	)
 	if internalError != nil {
+		tx.Rollback()
 		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
 			Err: internalError,
 		})
 	}
 	if !isValid {
+		tx.Rollback()
 		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
 			Info:   constants.RESPONSE_INFO.OldPasswordIsInvalid,
 			Status: fiber.StatusBadRequest,
@@ -74,14 +88,44 @@ func changePasswordController(context fiber.Ctx) error {
 
 	newPasswordHash, internalError := utilities.CreateHash(newPassword)
 	if internalError != nil {
+		tx.Rollback()
 		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
 			Err: internalError,
 		})
 	}
 
-	fmt.Println(newPasswordHash)
+	redisError := redis.Client.Del(
+		context.Context(),
+		redis.CreateKey(
+			constants.REDIS_PREFIXES.PasswordHash,
+			fmt.Sprint(userId),
+		),
+	).Err()
+	if redisError != nil {
+		tx.Rollback()
+		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+			Err: redisError,
+		})
+	}
 
-	// TODO: update password record, delete password hash from Redis, wrap into transaction
+	queryError = tx.
+		Model(&postgresql.Password{}).
+		Where("user_id = ?", userId).Update("hash", newPasswordHash).
+		Error
+	if queryError != nil {
+		tx.Rollback()
+		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+			Err: queryError,
+		})
+	}
+
+	commitError := tx.Commit().Error
+	if commitError != nil {
+		tx.Rollback()
+		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+			Err: commitError,
+		})
+	}
 
 	return utilities.Response(utilities.ResponseOptions{Context: context})
 }

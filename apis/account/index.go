@@ -10,5 +10,6 @@ func Initialize(server *fiber.App) {
 	router := server.Group("/api/account")
 
 	router.Get("/", getAccountController, middlewares.Authorization)
+	router.Patch("/", updateAccountController, middlewares.Authorization)
 	router.Patch("/password", changePasswordController, middlewares.Authorization)
 }
