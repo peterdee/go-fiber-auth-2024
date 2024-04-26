@@ -2,6 +2,7 @@ package constants
 
 type ActionMessages struct {
 	EnvLoadingError     string
+	InvalidTokenType    string
 	LoadedEnvFile       string
 	PGConnected         string
 	PGConnectionClosed  string

@@ -70,43 +70,20 @@ func signOutController(context fiber.Ctx) error {
 			Err: queryError,
 		})
 	}
-	if (refreshTokenRecord.ID != 0) ||
-		(accessTokenPairId != refreshTokenPairId) {
-		secret, secretError := utilities.CreateUserSecret(uint(userId))
-		if secretError != nil {
+	if (refreshTokenRecord.ID != 0) || (accessTokenPairId != refreshTokenPairId) {
+		internalError := signOutFromAllDevices(userId, tx, context)
+		if internalError != nil {
 			tx.Rollback()
 			return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
-				Err: secretError,
+				Err: internalError,
 			})
 		}
-		queryError := tx.
-			Model(&postgresql.UserSecret{}).
-			Where("user_id = ?", userId).Update("secret", secret).
-			Error
-		if queryError != nil {
-			tx.Rollback()
-			return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
-				Err: queryError,
-			})
-		}
+
 		commitError := tx.Commit().Error
 		if commitError != nil {
 			tx.Rollback()
 			return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
 				Err: commitError,
-			})
-		}
-
-		delError := redis.Client.Del(
-			context.Context(),
-			redis.CreateKey(
-				constants.REDIS_PREFIXES.SecretHash,
-				fmt.Sprint(userId),
-			),
-		).Err()
-		if delError != nil {
-			return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
-				Err: delError,
 			})
 		}
 

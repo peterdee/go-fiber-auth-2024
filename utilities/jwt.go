@@ -6,8 +6,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"go-fiber-auth-2024/constants"
+	"strconv"
 	"time"
 
+	"github.com/julyskies/gohelpers"
 	"github.com/pascaldekloe/jwt"
 )
 
@@ -15,9 +18,38 @@ type extraHeaders struct {
 	Type string `json:"typ"`
 }
 
-type TokenClaims struct {
-	Issued  jwt.NumericTime `json:"iat"`
-	Subject uint            `json:"sub"`
+const TOKEN_TYPE_ACCESS string = "access"
+const TOKEN_TYPE_REFRESH string = "refresh"
+
+func CheckTokenExpiration(issuedAtSeconds int64, tokenType string) (bool, error) {
+	if tokenType != TOKEN_TYPE_ACCESS && tokenType != TOKEN_TYPE_REFRESH {
+		return false, errors.New(constants.ACTION_MESSAGES.InvalidTokenType)
+	}
+
+	var tokenExpirationString string
+	if tokenType == TOKEN_TYPE_ACCESS {
+		tokenExpirationString = GetEnv(GetEnvOptions{
+			DefaultValue: fmt.Sprint(constants.TOKENS.DefaultAccessTokenExpirationSeconds),
+			EnvName:      constants.ENV_NAMES.AccessTokenExpirationSeconds,
+		})
+	}
+	if tokenType == TOKEN_TYPE_REFRESH {
+		tokenExpirationString = GetEnv(GetEnvOptions{
+			DefaultValue: fmt.Sprint(constants.TOKENS.DefaultRefreshTokenExpirationSeconds),
+			EnvName:      constants.ENV_NAMES.RefreshTokenExpirationSeconds,
+		})
+	}
+
+	tokenExpiration, convertError := strconv.Atoi(tokenExpirationString)
+	if convertError != nil {
+		return false, NewApplicationError(ApplicationErrorOptions{
+			Err: convertError,
+		})
+	}
+	if issuedAtSeconds+int64(tokenExpiration) < gohelpers.MakeTimestampSeconds() {
+		return true, nil
+	}
+	return false, nil
 }
 
 func CreateTokenSecret(

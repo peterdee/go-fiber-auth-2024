@@ -1,5 +1,10 @@
 package auth
 
+type RefreshTokensPayload struct {
+	AccessToken  string `json:"accessToken"`
+	RefreshToken string `json:"refreshToken"`
+}
+
 type SignInPayload struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`

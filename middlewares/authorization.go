@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v3"
-	"github.com/julyskies/gohelpers"
 
 	"go-fiber-auth-2024/constants"
 	"go-fiber-auth-2024/postgresql"
@@ -50,17 +49,16 @@ func Authorization(context fiber.Ctx) error {
 		})
 	}
 
-	accessTokenExpirationString := utilities.GetEnv(utilities.GetEnvOptions{
-		DefaultValue: fmt.Sprint(constants.TOKENS.DefaultAccessTokenExpirationSeconds),
-		EnvName:      constants.ENV_NAMES.AccessTokenExpirationSeconds,
-	})
-	accessTokenExpiration, convertError := strconv.Atoi(accessTokenExpirationString)
-	if convertError != nil {
+	isExpired, internalError := utilities.CheckTokenExpiration(
+		issuedAtSeconds,
+		utilities.TOKEN_TYPE_ACCESS,
+	)
+	if internalError != nil {
 		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
-			Err: convertError,
+			Err: internalError,
 		})
 	}
-	if issuedAtSeconds+int64(accessTokenExpiration) < gohelpers.MakeTimestampSeconds() {
+	if isExpired {
 		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
 			Info:   constants.RESPONSE_INFO.AccessTokenExpired,
 			Status: fiber.StatusUnauthorized,

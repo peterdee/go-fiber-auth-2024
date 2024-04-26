@@ -2,6 +2,7 @@ package constants
 
 var ACTION_MESSAGES = ActionMessages{
 	EnvLoadingError:     "Could not load ENV variable",
+	InvalidTokenType:    "invalid token type",
 	LoadedEnvFile:       "Loaded .env file",
 	PGConnected:         "PostgreSQL connected",
 	PGConnectionClosed:  "PostgreSQL connection closed",
