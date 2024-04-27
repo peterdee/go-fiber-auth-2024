@@ -1,11 +1,9 @@
 package auth
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/gofiber/fiber/v3"
-	"github.com/julyskies/gohelpers"
 
 	"go-fiber-auth-2024/constants"
 	"go-fiber-auth-2024/postgresql"
@@ -111,48 +109,15 @@ func signInController(context fiber.Ctx) error {
 		})
 	}
 
-	fingerprint := utilities.Fingerprint(context)
-	tokenPairId := gohelpers.RandomString(24)
-
-	accessTokenSecret := utilities.CreateTokenSecret(
-		userSecretRecord.Secret,
-		passwordRecord.Hash,
-		utilities.GetEnv(utilities.GetEnvOptions{
-			DefaultValue: constants.TOKENS.DefaultAccessTokenCommonSecret,
-			EnvName:      constants.ENV_NAMES.AccessTokenCommonSecret,
-		}),
-		fingerprint,
+	accessToken, refreshToken, internalError := createTokens(
+		userRecord.ID,
+		tx,
+		context,
 	)
-	accessToken, tokenError := utilities.CreateToken(
-		fmt.Sprint(userRecord.ID),
-		accessTokenSecret,
-		tokenPairId,
-	)
-	if tokenError != nil {
+	if internalError != nil {
 		tx.Rollback()
 		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
-			Err: tokenError,
-		})
-	}
-
-	refreshTokenSecret := utilities.CreateTokenSecret(
-		userSecretRecord.Secret,
-		passwordRecord.Hash,
-		utilities.GetEnv(utilities.GetEnvOptions{
-			DefaultValue: constants.TOKENS.DefaultRefreshTokenCommonSecret,
-			EnvName:      constants.ENV_NAMES.RefreshTokenCommonSecret,
-		}),
-		fingerprint,
-	)
-	refreshToken, tokenError := utilities.CreateToken(
-		fmt.Sprint(userRecord.ID),
-		refreshTokenSecret,
-		tokenPairId,
-	)
-	if tokenError != nil {
-		tx.Rollback()
-		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
-			Err: tokenError,
+			Err: internalError,
 		})
 	}
 
