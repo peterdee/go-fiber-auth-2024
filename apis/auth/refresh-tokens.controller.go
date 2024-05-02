@@ -79,6 +79,36 @@ func refreshTokensController(context fiber.Ctx) error {
 		})
 	}
 
+	// check if token is already stored in the database
+	var usedRefreshToken postgresql.UsedRefreshToken
+	queryError = tx.Where("token = ?", refreshToken).First(&usedRefreshToken).Error
+	if queryError != nil && queryError.Error() != "record not found" {
+		tx.Rollback()
+		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+			Err: queryError,
+		})
+	}
+	if usedRefreshToken.ID != 0 {
+		internalError := signOutFromAllDevices(int(user.ID), tx, context)
+		if internalError != nil {
+			tx.Rollback()
+			return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+				Err: internalError,
+			})
+		}
+		commitError := tx.Commit().Error
+		if commitError != nil {
+			tx.Rollback()
+			return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+				Err: commitError,
+			})
+		}
+		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+			Info:   constants.RESPONSE_INFO.Unauthorized,
+			Status: fiber.StatusUnauthorized,
+		})
+	}
+
 	// compare token pair ids
 	accessTokenPairId := accessTokenClaims.ID
 	refreshTokenPairId := refreshTokenClaims.ID
@@ -122,7 +152,61 @@ func refreshTokensController(context fiber.Ctx) error {
 		})
 	}
 
-	// TODO: verify refresh token, store it in the database
+	// verify refresh token, store it in the database
+	fingerprint := utilities.Fingerprint(context)
+	var userPasswordRecord postgresql.Password
+	queryError = tx.
+		Where(&postgresql.Password{UserID: user.ID}).
+		First(&userPasswordRecord).
+		Error
+	if queryError != nil {
+		tx.Rollback()
+		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+			Info:   constants.RESPONSE_INFO.Unauthorized,
+			Status: fiber.StatusUnauthorized,
+		})
+	}
+	var userSecretRecord postgresql.UserSecret
+	queryError = tx.
+		Where(&postgresql.UserSecret{UserID: user.ID}).
+		First(&userSecretRecord).
+		Error
+	if queryError != nil {
+		tx.Rollback()
+		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+			Info:   constants.RESPONSE_INFO.Unauthorized,
+			Status: fiber.StatusUnauthorized,
+		})
+	}
+	refreshTokenSecret := utilities.CreateTokenSecret(
+		userSecretRecord.Secret,
+		userPasswordRecord.Hash,
+		utilities.GetEnv(utilities.GetEnvOptions{
+			DefaultValue: constants.TOKENS.DefaultRefreshTokenCommonSecret,
+			EnvName:      constants.ENV_NAMES.RefreshTokenCommonSecret,
+		}),
+		fingerprint,
+	)
+	isValid := utilities.VerifyToken(refreshToken, refreshTokenSecret)
+	if !isValid {
+		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+			Info:   constants.RESPONSE_INFO.Unauthorized,
+			Status: fiber.StatusUnauthorized,
+		})
+	}
+
+	// store refresh token in the database
+	queryError = tx.Create(&postgresql.UsedRefreshToken{
+		ExpiresAt: refreshTokenClaims.Expires.Time().Unix(), // TODO: fix expiration time
+		Token:     refreshToken,
+		UserID:    user.ID,
+	}).Error
+	if queryError != nil {
+		tx.Rollback()
+		return utilities.NewApplicationError(utilities.ApplicationErrorOptions{
+			Err: queryError,
+		})
+	}
 
 	// create a new token pair
 	newAccessToken, newRefreshToken, internalError := createTokens(
