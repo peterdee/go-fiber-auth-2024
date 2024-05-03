@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/favicon"
@@ -48,10 +47,10 @@ func main() {
 	postgresql.CreateDatabaseConnection()
 	redis.CreateDatabaseConnection()
 
-	port := constants.PORT
-	if envPort := os.Getenv(constants.ENV_NAMES.Port); envPort != "" {
-		port = envPort
-	}
+	port := utilities.GetEnv(utilities.GetEnvOptions{
+		DefaultValue: constants.PORT,
+		EnvName:      constants.ENV_NAMES.Port,
+	})
 
 	apiAccount.Initialize(app)
 	apiAuth.Initialize(app)

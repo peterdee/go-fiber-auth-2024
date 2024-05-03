@@ -6,12 +6,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"go-fiber-auth-2024/constants"
 	"strconv"
 	"time"
 
 	"github.com/julyskies/gohelpers"
 	"github.com/pascaldekloe/jwt"
+
+	"go-fiber-auth-2024/constants"
 )
 
 type extraHeaders struct {
