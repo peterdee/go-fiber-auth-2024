@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/gofiber/fiber/v3"
@@ -46,7 +48,6 @@ func refreshTokensController(context fiber.Ctx) error {
 		})
 	}
 
-	// get user ids from AT & RT
 	accessTokenUserId := accessTokenClaims.Subject
 	refreshTokenUserId := refreshTokenClaims.Subject
 	if accessTokenUserId != refreshTokenUserId {
@@ -63,7 +64,6 @@ func refreshTokensController(context fiber.Ctx) error {
 		})
 	}
 
-	// check if user record exists
 	var user postgresql.User
 	queryError := tx.Where("id = ?", accessTokenUserId).First(&user).Error
 	if queryError != nil {
@@ -79,7 +79,6 @@ func refreshTokensController(context fiber.Ctx) error {
 		})
 	}
 
-	// check if token is already stored in the database
 	var usedRefreshToken postgresql.UsedRefreshToken
 	queryError = tx.Where("token = ?", refreshToken).First(&usedRefreshToken).Error
 	if queryError != nil && queryError.Error() != "record not found" {
@@ -109,7 +108,6 @@ func refreshTokensController(context fiber.Ctx) error {
 		})
 	}
 
-	// compare token pair ids
 	accessTokenPairId := accessTokenClaims.ID
 	refreshTokenPairId := refreshTokenClaims.ID
 	if accessTokenPairId != refreshTokenPairId {
@@ -133,7 +131,6 @@ func refreshTokensController(context fiber.Ctx) error {
 		})
 	}
 
-	// check refresh token expiration
 	isExpired, internalError := utilities.CheckTokenExpiration(
 		refreshTokenClaims.Expires.Time().Unix(),
 		utilities.TOKEN_TYPE_REFRESH,
@@ -152,7 +149,6 @@ func refreshTokensController(context fiber.Ctx) error {
 		})
 	}
 
-	// verify refresh token, store it in the database
 	fingerprint := utilities.Fingerprint(context)
 	var userPasswordRecord postgresql.Password
 	queryError = tx.
@@ -195,9 +191,16 @@ func refreshTokensController(context fiber.Ctx) error {
 		})
 	}
 
-	// store refresh token in the database
+	tokenExpirationString := utilities.GetEnv(utilities.GetEnvOptions{
+		DefaultValue: fmt.Sprint(constants.TOKENS.DefaultRefreshTokenExpirationSeconds),
+		EnvName:      constants.ENV_NAMES.RefreshTokenExpirationSeconds,
+	})
+	tokenExpiration, convertError := strconv.Atoi(tokenExpirationString)
+	if convertError != nil {
+		tokenExpiration = constants.TOKENS.DefaultRefreshTokenExpirationSeconds
+	}
 	queryError = tx.Create(&postgresql.UsedRefreshToken{
-		ExpiresAt: refreshTokenClaims.Expires.Time().Unix(), // TODO: fix expiration time
+		ExpiresAt: refreshTokenClaims.Expires.Time().Unix() + int64(tokenExpiration),
 		Token:     refreshToken,
 		UserID:    user.ID,
 	}).Error
@@ -208,7 +211,6 @@ func refreshTokensController(context fiber.Ctx) error {
 		})
 	}
 
-	// create a new token pair
 	newAccessToken, newRefreshToken, internalError := createTokens(
 		user.ID,
 		tx,

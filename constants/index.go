@@ -58,6 +58,7 @@ var RESPONSE_INFO = ResponseInfo{
 	EmailAlreadyInUse:      "EMAIL_ALREADY_IN_USE",
 	InternalServerError:    "INTERNAL_SERVER_ERROR",
 	InvalidToken:           "INVALID_TOKEN",
+	InvalidUserId:          "INVALID_USER_ID",
 	MissingData:            "MISSING_DATA",
 	MissingToken:           "MISSING_TOKEN",
 	Ok:                     "OK",

@@ -42,9 +42,11 @@ func CheckTokenExpiration(issuedAtSeconds int64, tokenType string) (bool, error)
 
 	tokenExpiration, convertError := strconv.Atoi(tokenExpirationString)
 	if convertError != nil {
-		return false, NewApplicationError(ApplicationErrorOptions{
-			Err: convertError,
-		})
+		if tokenType == TOKEN_TYPE_REFRESH {
+			tokenExpiration = constants.TOKENS.DefaultRefreshTokenExpirationSeconds
+		} else {
+			tokenExpiration = constants.TOKENS.DefaultAccessTokenExpirationSeconds
+		}
 	}
 	if issuedAtSeconds+int64(tokenExpiration) < gohelpers.MakeTimestampSeconds() {
 		return true, nil

@@ -52,6 +52,7 @@ type ResponseInfo struct {
 	EmailAlreadyInUse      string
 	InternalServerError    string
 	InvalidToken           string
+	InvalidUserId          string
 	MissingData            string
 	MissingToken           string
 	Ok                     string
