@@ -19,11 +19,19 @@ Required environment variables are located in [.env.example](./.env.example) fil
 
 ### Launch
 
+**Without Docker**
+
 ```shell script
 ENV_SOURCE=file go run ./
 
 # With AIR
 ENV_SOURCE=file air
+```
+
+**With Docker**
+
+```shell script
+docker run -p 2024:2024 --env-file .env -it $(docker build -q .)
 ```
 
 ### License

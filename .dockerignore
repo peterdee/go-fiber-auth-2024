@@ -1,0 +1,10 @@
+# Directories
+.git/
+.idea/
+tmp/
+
+# Files
+.DS_Store
+.env.example
+LICENSE.md
+README.md
