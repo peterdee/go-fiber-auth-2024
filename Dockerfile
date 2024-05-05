@@ -3,12 +3,6 @@ WORKDIR /build
 ADD go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN go build -o /server
-
-FROM alpine
-WORKDIR /release
-COPY --from=builder /server .
-COPY --from=builder /build/assets/favicon.ico ./assets/favicon.ico
+RUN go build -o server main.go
 ENV ENV_SOURCE env
-EXPOSE 2024
-ENTRYPOINT ["/release/server"]
+CMD ["/build/server"]
