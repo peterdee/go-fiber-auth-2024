@@ -3,6 +3,7 @@ package postgresql
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -45,17 +46,26 @@ func CreateDatabaseConnection() {
 		port,
 	)
 
-	db, connectionError := gorm.Open(
-		postgres.Open(dsn),
-		&gorm.Config{
-			Logger: logger.Default.LogMode(logger.Silent),
-		},
-	)
-	if connectionError != nil {
-		log.Fatal(connectionError)
+	for i := 0; i <= 5; i += 1 {
+		db, connectionError := gorm.Open(
+			postgres.Open(dsn),
+			&gorm.Config{
+				Logger: logger.Default.LogMode(logger.Silent),
+			},
+		)
+		if connectionError == nil {
+			Database = db
+			break
+		} else {
+			if i == 5 {
+				log.Fatal(connectionError)
+			}
+			log.Printf("Could not connect to PostgreSQL, retrying in %d sec", i+1)
+			time.Sleep(time.Second * time.Duration(i+1))
+		}
 	}
 
-	sqlDB, dbError := db.DB()
+	sqlDB, dbError := Database.DB()
 	if dbError != nil {
 		log.Fatal(dbError)
 	}
@@ -64,7 +74,7 @@ func CreateDatabaseConnection() {
 		log.Fatal(pingError)
 	}
 
-	autoMigrationError := db.AutoMigrate(
+	autoMigrationError := Database.AutoMigrate(
 		&User{},
 		&Password{},
 		&UserSecret{},
@@ -73,8 +83,6 @@ func CreateDatabaseConnection() {
 	if autoMigrationError != nil {
 		log.Fatal(autoMigrationError)
 	}
-
-	Database = db
 
 	log.Println(constants.ACTION_MESSAGES.PGConnected)
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 
@@ -32,9 +33,17 @@ func CreateDatabaseConnection() {
 		Username: username,
 	})
 
-	ping := Client.Ping(context.Background())
-	if ping.Err() != nil {
-		log.Fatal(ping.Err())
+	for i := 0; i <= 5; i += 1 {
+		ping := Client.Ping(context.Background())
+		if ping.Err() != nil {
+			if i == 5 {
+				log.Fatal(ping.Err())
+			}
+			log.Printf("Could not connect to Redis, retrying in %d sec", i+1)
+			time.Sleep(time.Second * time.Duration(i+1))
+		} else {
+			break
+		}
 	}
 
 	log.Println(constants.ACTION_MESSAGES.RedisConnected)

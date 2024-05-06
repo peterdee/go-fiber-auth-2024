@@ -3,21 +3,41 @@ version: "3.9"
 services:
   server:
     build:
-      dockerfile: dockerfile
+      dockerfile: ./Dockerfile
     container_name: server
     env_file:
       - ./.env
     environment:
       - ENV_SOURCE=env
+      - PG_HOST=pg
+      - PG_PASSWORD="root"
+      - PG_PORT=5432
+      - PG_USERNAME="root"
+      - REDIS_HOST=redis
     depends_on:
+      - pg
       - redis
     networks:
       - backend
     ports:
-      - 2024:2024
+      - "2024:2024"
+  
+  pg:
+    image: postgres:16.2
+    container_name: pg
+    environment:
+      POSTGRES_DB: "auth2024"
+      POSTGRES_USER: "root"
+      POSTGRES_PASSWORD: "root"
+    ports:
+      - "5432:5432"
+    restart: always
   
   redis:
     image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
     restart: always
 
 networks:
