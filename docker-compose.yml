@@ -1,0 +1,25 @@
+version: "3.9"
+
+services:
+  server:
+    build:
+      dockerfile: dockerfile
+    container_name: server
+    env_file:
+      - ./.env
+    environment:
+      - ENV_SOURCE=env
+    depends_on:
+      - redis
+    networks:
+      - backend
+    ports:
+      - 2024:2024
+  
+  redis:
+    image: redis:latest
+    restart: always
+
+networks:
+  backend:
+    driver: bridge
