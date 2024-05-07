@@ -24,6 +24,7 @@ type EnvNames struct {
 	Port                          string
 	RedisHost                     string
 	RedisPassword                 string
+	RedisPort                     string
 	RedisUsername                 string
 	RefreshTokenCommonSecret      string
 	RefreshTokenExpirationSeconds string

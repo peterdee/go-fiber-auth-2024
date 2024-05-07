@@ -22,12 +22,16 @@ func CreateDatabaseConnection() {
 	password := utilities.GetEnv(utilities.GetEnvOptions{
 		EnvName: constants.ENV_NAMES.RedisPassword,
 	})
+	port := utilities.GetEnv(utilities.GetEnvOptions{
+		DefaultValue: fmt.Sprint(constants.DEFAULT_REDIS_PORT),
+		EnvName:      constants.ENV_NAMES.RedisPort,
+	})
 	username := utilities.GetEnv(utilities.GetEnvOptions{
 		EnvName: constants.ENV_NAMES.RedisUsername,
 	})
 
 	Client = redis.NewClient(&redis.Options{
-		Addr:     host,
+		Addr:     fmt.Sprintf("%s:%s", host, port),
 		DB:       0,
 		Password: password,
 		Username: username,
