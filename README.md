@@ -1,5 +1,14 @@
 ## go-fiber-auth-2024
 
+Authentication & authorization in [Fiber](https://gofiber.io) (an up-to-date version of https://github.com/peterdee/go-fiber-auth)
+
+Key features:
+- PostgreSQL
+- Redis
+- JWT
+- Additional JWT protection mechanics (fingerprinting, token pairing)
+- Gloabal error handler with custom errors
+
 ### Deploy
 
 ```shell script
@@ -32,6 +41,12 @@ ENV_SOURCE=file air
 
 ```shell script
 docker run -p 2024:2024 --env-file .env -it $(docker build -q .)
+```
+
+**With Docker Compose**
+
+```shell script
+docker compose up -d
 ```
 
 ### License
