@@ -13,6 +13,7 @@ services:
       - PG_USERNAME=${PG_USERNAME}
       - PORT=2024
       - REDIS_HOST=redis
+      - REDIS_PORT=${REDIS_PORT}
     depends_on:
       - pg
       - redis
@@ -24,6 +25,8 @@ services:
   pg:
     image: postgres:16.2
     container_name: pg
+    env_file:
+      - ./.env
     environment:
       - POSTGRES_DB=${PG_DATABASE}
       - POSTGRES_PASSWORD=${PG_PASSWORD}
@@ -37,11 +40,14 @@ services:
   
   redis:
     image: redis:latest
+    command: --port ${REDIS_PORT}
     container_name: redis
+    env_file:
+      - ./.env
     networks:
       - backend
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT}:${REDIS_PORT}"
     restart: always
 
 networks:
